@@ -308,6 +308,24 @@ void Receiver_Task(void *argument)
   }
 }
 
+// ISR callback function
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+  HAL_UART_Receive_IT(&huart1, &rx_data, 1);
+  int to_send = 12345;
+  if(rx_data == 'r')
+  {
+    BaseType_t pxHigherPriorityTaskWoken = pdFALSE;
+
+    if (xQueueSendToBackFromISR(SimpleQueue, &to_send, &pxHigherPriorityTaskWoken))
+    {
+      HAL_UART_Transmit(&huart1, (uint8_t*) "Sent from ISR\n\n", 15, 500);
+    }
+
+    portEND_SWITCHING_ISR(pxHigherPriorityTaskWoken);
+  }
+}
+
 /* USER CODE END 4 */
 
 /**
