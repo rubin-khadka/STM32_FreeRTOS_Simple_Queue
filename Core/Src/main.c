@@ -29,6 +29,7 @@
 #include "event_groups.h"
 
 #include "string.h"
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -72,6 +73,8 @@ xTaskHandle Receiver_handler;
 
 // Queue Handler
 xQueueHandle SimpleQueue;
+
+uint8_t rx_data;
 
 // Task Functions
 void Sender_HPT_Task(void *argument);
@@ -126,8 +129,15 @@ int main(void)
   }
 
   // Create Tasks
-  xTaskCreate(Sender_HPT_Task, "HPT_SEND", 128, NULL, 3, Sender_HPT_handler);
-  xTaskCreate(Sender_LPT_Task, "LPT_SEND", 128, (void *), 2, Sender_LPT_handler);
+  xTaskCreate(Sender_HPT_Task, "HPT_SEND", 128, NULL, 3, &Sender_HPT_handler);
+  xTaskCreate(Sender_LPT_Task, "LPT_SEND", 128, (void*) 111, 2, &Sender_LPT_handler);
+
+  xTaskCreate(Receiver_Task, "Receive", 128, NULL, 1, &Receiver_handler);
+
+  HAL_UART_Receive_IT(&huart1, &rx_data, 1);
+
+  vTaskStartScheduler();
+
   /* USER CODE END 2 */
 
   /* We should never get here as control is now taken by the scheduler */
@@ -235,6 +245,68 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+void Sender_HPT_Task(void *argument)
+{
+  int i = 222;
+  uint32_t ticks = pdMS_TO_TICKS(2000);
+  while(1)
+  {
+    char *str = "Entered Sender HPT Task\n about to send number to the queue\n\n";
+    HAL_UART_Transmit(&huart1, (uint8_t*) str, strlen(str), HAL_MAX_DELAY);
+
+    if(xQueueSend(SimpleQueue, &i, portMAX_DELAY) == pdPASS)
+    {
+      char *str2 = "Successfully sent the number to the queue\n Leaving Sender HPT Task\n\n";
+      HAL_UART_Transmit(&huart1, (uint8_t*) str2, strlen(str2), HAL_MAX_DELAY);
+    }
+
+    vTaskDelay(ticks);
+  }
+}
+
+void Sender_LPT_Task(void *argument)
+{
+  int to_send;
+  uint32_t ticks = pdMS_TO_TICKS(1000);
+  while(1)
+  {
+    to_send = (int) argument;
+    char *str = "Entered Sender LPT Task\n about to send number to the queue\n\n";
+    HAL_UART_Transmit(&huart1, (uint8_t*) str, strlen(str), HAL_MAX_DELAY);
+
+    xQueueSend(SimpleQueue, &to_send, portMAX_DELAY);
+
+    char *str2 = "Successfully sent the number to the queue\n Leaving Sender LPT Task\n\n";
+    HAL_UART_Transmit(&huart1, (uint8_t*) str2, strlen(str2), HAL_MAX_DELAY);
+
+    vTaskDelay(ticks);
+  }
+}
+
+void Receiver_Task(void *argument)
+{
+  int received = 0;
+  uint32_t ticks = pdMS_TO_TICKS(5000);
+  while(1)
+  {
+    char str[100];
+    strcpy(str, "Entered Receiver Task\n about to receive a number from the queue\n\n");
+    HAL_UART_Transmit(&huart1, (uint8_t*) str, strlen(str), HAL_MAX_DELAY);
+
+    if(xQueueReceive(SimpleQueue, &received, portMAX_DELAY) != pdTRUE)
+    {
+      HAL_UART_Transmit(&huart1, (uint8_t*) "Error in Receiving from the queue\n\n", 35, 1000);
+    }
+    else
+    {
+      sprintf(str, "Successfully received the number %d from the queue\n Leaving Receiver Task\n\n", received);
+      HAL_UART_Transmit(&huart1, (uint8_t*) str, strlen(str), HAL_MAX_DELAY);
+    }
+
+    vTaskDelay(ticks);
+  }
+}
 
 /* USER CODE END 4 */
 
