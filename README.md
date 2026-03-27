@@ -19,6 +19,10 @@ A queue with capacity of 5 integers is used to pass data between sender tasks an
 - ISR as Special Producer: UART interrupt can also send data when user types 'r'
 - Queue as Buffer: Temporarily stores messages when consumer is busy
 
+## UART Output
+
+https://github.com/user-attachments/assets/f28b0cab-46fc-4087-8805-57ace04abe2b
+
 ## Hardware Requirements
 - STM32 development board (STM32F103C8T6 "Blue Pill")
 - USB-to-UART converter (for viewing debug messages and sending commands)
@@ -43,7 +47,7 @@ A queue with capacity of 5 integers is used to pass data between sender tasks an
 - Total Size: 20 bytes
 - Access Method: FIFO (First In, First Out)
 
-## Queue Behavior Demonstrated
+## Queue Behavior
 1. Thread-Safe Communication
     - Multiple tasks can safely send to the same queue
     - No data corruption or race conditions
@@ -59,37 +63,6 @@ A queue with capacity of 5 integers is used to pass data between sender tasks an
     - UART ISR can send data to queue (special FromISR function)
     - Demonstrates safe interrupt-to-task data transfer
     - Shows proper context switching from ISR
-
-## Expected UART Output
-```
-Simple queue Successfully Created
-
-Entered Sender LPT Task
-about to send number to the queue
-
-Successfully sent the number to the queue
-Leaving Sender LPT Task
-
-Entered Sender HPT Task
-about to send number to the queue
-
-Successfully sent the number to the queue
-Leaving Sender HPT Task
-
-Entered Sender LPT Task
-about to send number to the queue
-
-Successfully sent the number to the queue
-Leaving Sender LPT Task
-
-Entered Receiver Task
-about to receive a number from the queue
-
-Successfully received the number 111 from the queue
-Leaving Receiver Task
-
-... (pattern continues)
-```
 
 ## Queue Operations Comparison
 | Operation | Task Context | ISR Context | Blocking Behavior |
